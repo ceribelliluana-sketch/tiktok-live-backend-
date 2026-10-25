@@ -124,7 +124,7 @@ function connectWebSocket(url) {
   try {
     ws = new WebSocket(url);
     ws.onopen = () => {
-      localStorage.setItem('tiktok_ws_url', url); // Guarda a URL
+      localStorage.setItem('tiktok_ws_url', url);
       $("connect-overlay").style.display = "none";
       $("restore-hud-btn").style.display = "flex";
       $("ws-status").innerText = "🟢 ONLINE";
@@ -172,7 +172,7 @@ function triggerJackpot(user, gift, coinsAmt) {
   playSound('jackpot');
   casinoJackpot += coinsAmt * 10;
   slotAnimation = { active: true, progress: 3.0, user, giftName: gift, reward: coinsAmt * 10, rolls: 0 };
-  spawnCoins(Math.min(coinsAmt, 100)); // Limita máximo de moedas visuais
+  spawnCoins(Math.min(coinsAmt, 100));
   checkEventProgress("gifts", 1);
   addChatMessage("SISTEMA", `${user} enviou ${gift}!`);
 }
@@ -195,17 +195,14 @@ function init3D() {
   renderer = new THREE.WebGLRenderer({ canvas: $("webgl"), antialias: true });
   renderer.setSize(c.clientWidth, c.clientHeight);
   
-  // Iluminação Neon
   scene.add(new THREE.AmbientLight(0x221144, 1.5));
   const p1 = new THREE.PointLight(0xa855f7, 3, 100); p1.position.set(-20, 20, -10); scene.add(p1);
   const p2 = new THREE.PointLight(0xfde047, 3, 100); p2.position.set(20, 20, 10); scene.add(p2);
   const p3 = new THREE.PointLight(0xef4444, 2, 100); p3.position.set(0, 5, 20); scene.add(p3);
 
-  // Grelha Tron-Style
   const grid = new THREE.GridHelper(100, 25, 0xa855f7, 0x311065);
   grid.position.y = 0; scene.add(grid);
 
-  // Cristal Central (Centerpiece)
   const geo = new THREE.OctahedronGeometry(4, 0);
   const mat = new THREE.MeshStandardMaterial({ color: 0x00ffff, metalness: 0.8, roughness: 0.1, emissive: 0x002244 });
   centerDiamond = new THREE.Mesh(geo, mat);
@@ -250,7 +247,6 @@ function renderHUD(dt) {
   hudCtx.clearRect(0, 0, W, H);
   if (document.body.classList.contains("obs-clean")) return;
 
-  // Evento Hype
   eventTimeLeft -= dt;
   if (eventTimeLeft <= 0 && currentEvent.p < currentEvent.g) {
     playSound('alert'); currentEvent.t = "❌ FALHA NO EVENTO!"; setTimeout(newEvent, 2500);
@@ -266,16 +262,14 @@ function renderHUD(dt) {
     hudCtx.shadowBlur = 0;
   }
 
-  // Jackpot Geral
   drawNeonRect(W/2 - 140, 105, 280, 45, 10, "#fde047");
   hudCtx.fillStyle = "#fde047"; hudCtx.font = "900 16px 'JetBrains Mono'"; hudCtx.textAlign = "center";
   hudCtx.fillText(`💎 JACKPOT: ${casinoJackpot.toLocaleString()}`, W/2, 134);
 
-  // Chat Holográfico
   hudCtx.textAlign = "left";
   for (let i = chatMessages.length - 1; i >= 0; i--) {
     const c = chatMessages[i];
-    c.life -= dt; c.y -= 35 * dt; // Sobe
+    c.life -= dt; c.y -= 35 * dt;
     if (c.life <= 0) { chatMessages.splice(i, 1); continue; }
     hudCtx.globalAlpha = Math.min(1, c.life);
     hudCtx.fillStyle = c.u === "SISTEMA" ? "#fde047" : "#39ff88";
@@ -284,7 +278,6 @@ function renderHUD(dt) {
   }
   hudCtx.globalAlpha = 1.0;
 
-  // Slot Machine (Jackpot Alerta)
   if (slotAnimation.active) {
     slotAnimation.progress -= dt;
     if (slotAnimation.progress <= 0) slotAnimation.active = false;
@@ -295,11 +288,10 @@ function renderHUD(dt) {
     hudCtx.fillStyle = "#fff"; hudCtx.textAlign = "center"; hudCtx.font = "900 16px Inter";
     hudCtx.fillText(`${slotAnimation.user} enviou ${slotAnimation.giftName}!`, W/2, by + 30);
     
-    // Efeito de Rolo (Números a passar rápido)
     let displayReward = slotAnimation.reward;
     if (slotAnimation.progress > 0.8) {
        displayReward = Math.floor(Math.random() * 99999);
-       if (Math.random() < 0.2) playSound('coin'); // Som de roleta
+       if (Math.random() < 0.2) playSound('coin');
     }
     
     hudCtx.fillStyle = "#39ff88"; hudCtx.font = "900 32px 'JetBrains Mono'";
@@ -311,26 +303,23 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(0.1, clock.getDelta());
   
-  // Rotação do Cristal
   if (centerDiamond) {
     centerDiamond.rotation.y += 1.5 * dt;
     centerDiamond.position.y = 8 + Math.sin(Date.now() * 0.003) * 1.5;
   }
   
-  // Física das Moedas
   for (let i = coins.length - 1; i >= 0; i--) {
     const c = coins[i];
-    c.vy -= 40 * dt; // Gravidade
+    c.vy -= 40 * dt;
     c.m.position.y += c.vy * dt;
     c.m.position.x += c.vx; c.m.position.z += c.vz;
     c.m.rotation.x += c.ry; c.m.rotation.z += c.ry;
     
-    // Salto no chão
     if (c.m.position.y < 0.5) {
       c.m.position.y = 0.5;
-      c.vy = Math.abs(c.vy) * 0.5; // Ressalto
-      c.vx *= 0.8; c.vz *= 0.8; // Fricção
-      if (Math.abs(c.vy) < 2) { scene.remove(c.m); coins.splice(i, 1); } // Morre se parar
+      c.vy = Math.abs(c.vy) * 0.5;
+      c.vx *= 0.8; c.vz *= 0.8;
+      if (Math.abs(c.vy) < 2) { scene.remove(c.m); coins.splice(i, 1); }
     }
   }
 
@@ -346,4 +335,14 @@ document.querySelectorAll("[data-action]").forEach(b => {
     if(b.dataset.action==="comment"){ checkEventProgress("comments", 1); addChatMessage("Fã_Teste", "Incrível! 🔥"); }
   };
 });
-document.querySelectorAll("
+document.querySelectorAll("[data-gift]").forEach(b => {
+  b.onclick = () => {
+    initAudio();
+    triggerJackpot("@Mito_da_Live", b.dataset.gift === "lion" ? "Leão" : "Rosa", b.dataset.gift === "lion" ? 500 : 5);
+  };
+});
+$("btn-clean").onclick = () => document.body.classList.add("obs-clean");
+$("restore-hud-btn").onclick = () => document.body.classList.remove("obs-clean");
+</script>
+</body>
+</html>
