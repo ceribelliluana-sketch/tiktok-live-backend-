@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>TikTok Live AI Pro Max — Ultimate 3D Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root { box-sizing: border-box; color-scheme: dark; --bg: #03000a; --fg: #ffffff; }
+*, *::before, *::after { box-sizing: inherit; -webkit-tap-highlight-color: transparent; }
+html, body { width: 100%; height: 100%; margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: 'Inter', sans-serif; overflow: hidden; user-select: none; display: flex; flex-direction: column; }
+body.obs-clean #ctl, body.obs-clean #top-utility-bar { display: none !important; }
+
+#game-container { flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; max-width: 480px; margin: 0 auto; box-shadow: 0 0 120px rgba(120, 9, 180, 0.4); border-left: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1); }
+canvas#webgl, canvas#hud-canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+canvas#hud-canvas { pointer-events: none; z-index: 25; }
+
+#connect-overlay { position: fixed; inset: 0; background: radial-gradient(circle at 50% 40%, rgba(60, 5, 120, 0.95) 0%, rgba(10, 2, 30, 0.99) 70%, #010004 100%); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; gap: 20px; backdrop-filter: blur(10px); }
+#connect-overlay h1 { margin: 0; font-size: clamp(28px, 6vw, 48px); font-weight: 900; background: linear-gradient(135deg, #fff 0%, #fde047 40%, #ff0055 80%, #00ffff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0px 4px 15px rgba(255,0,85,0.4)); text-transform: uppercase; letter-spacing: -1px; }
+#ws-input { width: 100%; max-width: 380px; padding: 16px; border-radius: 12px; border: 2px solid #a855f7; background: rgba(0,0,0,0.6); color: #fff; text-align: center; font-size: 16px; font-weight: 800; outline: none; transition: 0.3s; box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.2); }
+#ws-input:focus { border-color: #fde047; box-shadow: 0 0 20px rgba(253, 224, 71, 0.4); }
+#btn-start { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #a855f7 100%); border: 2px solid #fde047; border-radius: 999px; color: #fff; padding: 18px 50px; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4); transition: transform 0.1s; text-transform: uppercase; }
+#btn-start:active { transform: scale(0.95); }
+
+#top-utility-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: rgba(5,2,14,0.95); border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 100; backdrop-filter: blur(5px); }
+#ctl { background: rgba(5,2,14,0.95); border-top: 1px solid rgba(255,255,255,0.1); padding: 12px; display: flex; flex-direction: column; gap: 8px; z-index: 100; text-align: center; }
+.gift-btn { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 14px; font-size: 12px; cursor: pointer; font-weight: 800; transition: 0.2s; margin: 2px; }
+.gift-btn:hover { background: rgba(255,255,255,0.15); border-color: #39ff88; }
+.btn-epic { background: linear-gradient(135deg, #991b1b, #dc2626); border-color: #fde047; box-shadow: 0 0 15px rgba(220, 38, 38, 0.5); }
+#restore-hud-btn { position: fixed; bottom: 20px; right: 20px; z-index: 500; display: none; background: rgba(15,23,42,0.95); border: 2px solid #39ff88; color: #fff; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-weight: 900; box-shadow: 0 0 20px rgba(57, 255, 136, 0.3); }
+</style>
+</head>
+<body>
+
+<div id="connect-overlay">
+  <h1>⚡ AI PRO MAX 3D</h1>
+  <p style="color:#cbd5e1; font-size:14px; max-width: 420px; line-height: 1.5;">Motor Físico de Moedas • Áudio Sintetizado • Slot Machine • Chat Holográfico</p>
+  <input type="text" id="ws-input" placeholder="wss://seu-projeto.onrender.com">
+  <button id="btn-start">🚀 INICIAR SISTEMA</button>
+  <p id="status-text" style="color: #fde047; font-size: 13px; font-weight: 800;"></p>
+</div>
+
+<div id="top-utility-bar">
+  <span id="ws-status" style="font-size:12px; font-weight:900; color:#ef4444; letter-spacing: 0.5px;">🔴 OFFLINE</span>
+  <button class="gift-btn" id="btn-clean">📺 Modo Limpo (OBS)</button>
+</div>
+
+<div id="game-container">
+  <canvas id="webgl"></canvas>
+  <canvas id="hud-canvas"></canvas>
+</div>
+
+<div id="ctl">
+  <span style="font-size:11px; font-weight:900; color:#94a3b8; letter-spacing: 1px;">PAINEL DE TESTES DO STREAMER:</span>
+  <div>
+    <button class="gift-btn" data-action="like">❤️ Gosto (+15)</button>
+    <button class="gift-btn" data-action="comment">💬 Chat (Holograma)</button>
+    <button class="gift-btn" data-gift="rosa">🌹 Rosa</button>
+    <button class="gift-btn btn-epic" data-gift="lion">🦁 Leão (Jackpot)</button>
+  </div>
+</div>
+<button id="restore-hud-btn">⚙️ MENU</button>
+
+<script>
+const $ = id => document.getElementById(id);
+let scene, camera, renderer, clock, hudCanvas, hudCtx;
+let coins = [], chatMessages = [], particles = [];
+let casinoJackpot = 50000;
+let slotAnimation = { active: false, progress: 0, user: "", giftName: "", reward: 0, rolls: 0 };
+let currentEvent = null, eventTimeLeft = 25.0, ws = null;
+let centerDiamond;
+
+// --- MOTOR DE ÁUDIO SINTETIZADO ---
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+    catch (e) { console.warn("Áudio não suportado"); }
+  }
+}
+function playSound(type) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+
+  if (type === 'coin') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200 + Math.random() * 400, t);
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    osc.start(t); osc.stop(t + 0.1);
+  } else if (type === 'jackpot') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(400, t);
+    osc.frequency.linearRampToValueAtTime(800, t + 0.2);
+    osc.frequency.linearRampToValueAtTime(1200, t + 0.4);
+    gain.gain.setValueAtTime(0.15, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+    osc.start(t); osc.stop(t + 0.8);
+  } else if (type === 'alert') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, t);
+    osc.frequency.exponentialRampToValueAtTime(100, t + 0.3);
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    osc.start(t); osc.stop(t + 0.3);
+  }
+}
+
+// --- CONFIGURAÇÃO INICIAL (LocalStorage) ---
+window.onload = () => {
+  const savedWs = localStorage.getItem('tiktok_ws_url');
+  if (savedWs) $("ws-input").value = savedWs;
+};
+
+function connectWebSocket(url) {
+  initAudio();
+  $("status-text").innerText = "A estabelecer ligação...";
+  try {
+    ws = new WebSocket(url);
+    ws.onopen = () => {
+      localStorage.setItem('tiktok_ws_url', url); // Guarda a URL
+      $("connect-overlay").style.display = "none";
+      $("restore-hud-btn").style.display = "flex";
+      $("ws-status").innerText = "🟢 ONLINE";
+      $("ws-status").style.color = "#39ff88";
+      init3D(); animate();
+    };
+    ws.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      if (data.type === 'like') { checkEventProgress("likes", Math.min(data.count, 20)); spawnCoins(1); }
+      if (data.type === 'comment') { checkEventProgress("comments", 1); addChatMessage(data.user, data.comment); }
+      if (data.type === 'gift') { triggerJackpot(data.user, data.giftName, data.diamondCount); }
+    };
+    ws.onerror = () => $("status-text").innerText = "Erro: Servidor não encontrado ou URL inválida.";
+    ws.onclose = () => { $("ws-status").innerText = "🔴 OFFLINE"; $("ws-status").style.color = "#ef4444"; };
+  } catch(e) { $("status-text").innerText = "URL inválida. Comece com wss://"; }
+}
+
+$("btn-start").onclick = () => { const u = $("ws-input").value.trim(); if(u) connectWebSocket(u); };
+
+// --- LÓGICA DO JOGO ---
+const HYPE_EVENTS = [
+  { t: "🔥 HYPE DE GOSTOS", c: "#a855f7", ty: "likes", g: 150 },
+  { t: "⚡ CHUVA DE CHAT", c: "#fde047", ty: "comments", g: 30 },
+  { t: "💎 COFRE DE PRESENTES", c: "#ef4444", ty: "gifts", g: 1 }
+];
+
+function newEvent() {
+  const r = HYPE_EVENTS[Math.floor(Math.random() * HYPE_EVENTS.length)];
+  currentEvent = { ...r, p: 0 }; eventTimeLeft = 30.0;
+}
+
+function checkEventProgress(type, amt) {
+  if (!currentEvent) return;
+  if (currentEvent.ty === type) {
+    currentEvent.p += amt;
+    if (currentEvent.p >= currentEvent.g) {
+      playSound('jackpot'); casinoJackpot += 5000;
+      currentEvent.t = "🎉 SUCESSO! +5000 MOEDAS 🎉";
+      spawnCoins(40); setTimeout(newEvent, 3500);
+    }
+  }
+}
+
+function triggerJackpot(user, gift, coinsAmt) {
+  playSound('jackpot');
+  casinoJackpot += coinsAmt * 10;
+  slotAnimation = { active: true, progress: 3.0, user, giftName: gift, reward: coinsAmt * 10, rolls: 0 };
+  spawnCoins(Math.min(coinsAmt, 100)); // Limita máximo de moedas visuais
+  checkEventProgress("gifts", 1);
+  addChatMessage("SISTEMA", `${user} enviou ${gift}!`);
+}
+
+function addChatMessage(user, txt) {
+  playSound('coin');
+  chatMessages.push({ u: user, t: txt, y: hudCanvas.height, life: 4.0 });
+  if (chatMessages.length > 8) chatMessages.shift();
+}
+
+// --- MOTOR 3D ---
+function init3D() {
+  const c = $("game-container");
+  scene = new THREE.Scene(); scene.background = new THREE.Color(0x03000a);
+  scene.fog = new THREE.FogExp2(0x03000a, 0.015);
+  
+  camera = new THREE.PerspectiveCamera(45, c.clientWidth / c.clientHeight, 0.1, 1000);
+  camera.position.set(0, 30, 45); camera.lookAt(0, 5, 0);
+  
+  renderer = new THREE.WebGLRenderer({ canvas: $("webgl"), antialias: true });
+  renderer.setSize(c.clientWidth, c.clientHeight);
+  
+  // Iluminação Neon
+  scene.add(new THREE.AmbientLight(0x221144, 1.5));
+  const p1 = new THREE.PointLight(0xa855f7, 3, 100); p1.position.set(-20, 20, -10); scene.add(p1);
+  const p2 = new THREE.PointLight(0xfde047, 3, 100); p2.position.set(20, 20, 10); scene.add(p2);
+  const p3 = new THREE.PointLight(0xef4444, 2, 100); p3.position.set(0, 5, 20); scene.add(p3);
+
+  // Grelha Tron-Style
+  const grid = new THREE.GridHelper(100, 25, 0xa855f7, 0x311065);
+  grid.position.y = 0; scene.add(grid);
+
+  // Cristal Central (Centerpiece)
+  const geo = new THREE.OctahedronGeometry(4, 0);
+  const mat = new THREE.MeshStandardMaterial({ color: 0x00ffff, metalness: 0.8, roughness: 0.1, emissive: 0x002244 });
+  centerDiamond = new THREE.Mesh(geo, mat);
+  centerDiamond.position.y = 8;
+  scene.add(centerDiamond);
+
+  hudCanvas = $("hud-canvas"); hudCanvas.width = c.clientWidth; hudCanvas.height = c.clientHeight;
+  hudCtx = hudCanvas.getContext("2d");
+  clock = new THREE.Clock(); newEvent();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = c.clientWidth / c.clientHeight; camera.updateProjectionMatrix();
+    renderer.setSize(c.clientWidth, c.clientHeight);
+    hudCanvas.width = c.clientWidth; hudCanvas.height = c.clientHeight;
+  });
+}
+
+const coinGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.2, 16);
+const coinMat = new THREE.MeshStandardMaterial({ color: 0xfde047, metalness: 1, roughness: 0.3 });
+
+function spawnCoins(amount) {
+  for(let i=0; i<amount; i++) {
+    const mesh = new THREE.Mesh(coinGeo, coinMat);
+    mesh.position.set((Math.random()-0.5)*15, 25 + Math.random()*10, (Math.random()-0.5)*10 - 5);
+    mesh.rotation.set(Math.random(), Math.random(), Math.random());
+    scene.add(mesh);
+    coins.push({ m: mesh, vy: 0, vx: (Math.random()-0.5)*0.5, vz: (Math.random()-0.5)*0.5, ry: Math.random()*0.2 });
+  }
+}
+
+// --- HUD E RENDERIZAÇÃO 2D ---
+function drawNeonRect(x, y, w, h, r, color) {
+  hudCtx.save();
+  hudCtx.shadowBlur = 15; hudCtx.shadowColor = color;
+  hudCtx.fillStyle = "rgba(10, 2, 25, 0.9)"; hudCtx.strokeStyle = color; hudCtx.lineWidth = 2;
+  hudCtx.beginPath(); hudCtx.roundRect(x, y, w, h, r); hudCtx.fill(); hudCtx.stroke();
+  hudCtx.restore();
+}
+
+function renderHUD(dt) {
+  const W = hudCanvas.width, H = hudCanvas.height;
+  hudCtx.clearRect(0, 0, W, H);
+  if (document.body.classList.contains("obs-clean")) return;
+
+  // Evento Hype
+  eventTimeLeft -= dt;
+  if (eventTimeLeft <= 0 && currentEvent.p < currentEvent.g) {
+    playSound('alert'); currentEvent.t = "❌ FALHA NO EVENTO!"; setTimeout(newEvent, 2500);
+  }
+  if (currentEvent) {
+    drawNeonRect(15, 15, W-30, 75, 12, currentEvent.c);
+    hudCtx.fillStyle = "#fff"; hudCtx.font = "900 13px Inter"; hudCtx.textAlign="left"; hudCtx.fillText(currentEvent.t, 30, 38);
+    hudCtx.fillStyle = "#fde047"; hudCtx.font = "900 14px 'JetBrains Mono'"; hudCtx.textAlign="right"; hudCtx.fillText(`${Math.max(0, eventTimeLeft).toFixed(1)}s`, W-30, 38);
+    
+    hudCtx.fillStyle = "rgba(255,255,255,0.15)"; hudCtx.fillRect(30, 60, W-60, 12);
+    hudCtx.fillStyle = currentEvent.c; hudCtx.shadowBlur = 10; hudCtx.shadowColor = currentEvent.c;
+    hudCtx.fillRect(30, 60, (W-60) * Math.min(1, currentEvent.p / currentEvent.g), 12);
+    hudCtx.shadowBlur = 0;
+  }
+
+  // Jackpot Geral
+  drawNeonRect(W/2 - 140, 105, 280, 45, 10, "#fde047");
+  hudCtx.fillStyle = "#fde047"; hudCtx.font = "900 16px 'JetBrains Mono'"; hudCtx.textAlign = "center";
+  hudCtx.fillText(`💎 JACKPOT: ${casinoJackpot.toLocaleString()}`, W/2, 134);
+
+  // Chat Holográfico
+  hudCtx.textAlign = "left";
+  for (let i = chatMessages.length - 1; i >= 0; i--) {
+    const c = chatMessages[i];
+    c.life -= dt; c.y -= 35 * dt; // Sobe
+    if (c.life <= 0) { chatMessages.splice(i, 1); continue; }
+    hudCtx.globalAlpha = Math.min(1, c.life);
+    hudCtx.fillStyle = c.u === "SISTEMA" ? "#fde047" : "#39ff88";
+    hudCtx.font = "800 12px Inter"; hudCtx.fillText(c.u + ":", 20, c.y);
+    hudCtx.fillStyle = "#cbd5e1"; hudCtx.font = "600 12px Inter"; hudCtx.fillText(c.t.substring(0,40), 20 + hudCtx.measureText(c.u+": ").width, c.y);
+  }
+  hudCtx.globalAlpha = 1.0;
+
+  // Slot Machine (Jackpot Alerta)
+  if (slotAnimation.active) {
+    slotAnimation.progress -= dt;
+    if (slotAnimation.progress <= 0) slotAnimation.active = false;
+    
+    const bx = W/2 - 160, by = H/2 - 60;
+    drawNeonRect(bx, by, 320, 120, 16, "#ef4444");
+    
+    hudCtx.fillStyle = "#fff"; hudCtx.textAlign = "center"; hudCtx.font = "900 16px Inter";
+    hudCtx.fillText(`${slotAnimation.user} enviou ${slotAnimation.giftName}!`, W/2, by + 30);
+    
+    // Efeito de Rolo (Números a passar rápido)
+    let displayReward = slotAnimation.reward;
+    if (slotAnimation.progress > 0.8) {
+       displayReward = Math.floor(Math.random() * 99999);
+       if (Math.random() < 0.2) playSound('coin'); // Som de roleta
+    }
+    
+    hudCtx.fillStyle = "#39ff88"; hudCtx.font = "900 32px 'JetBrains Mono'";
+    hudCtx.fillText(`+${displayReward.toLocaleString()}`, W/2, by + 80);
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.1, clock.getDelta());
+  
+  // Rotação do Cristal
+  if (centerDiamond) {
+    centerDiamond.rotation.y += 1.5 * dt;
+    centerDiamond.position.y = 8 + Math.sin(Date.now() * 0.003) * 1.5;
+  }
+  
+  // Física das Moedas
+  for (let i = coins.length - 1; i >= 0; i--) {
+    const c = coins[i];
+    c.vy -= 40 * dt; // Gravidade
+    c.m.position.y += c.vy * dt;
+    c.m.position.x += c.vx; c.m.position.z += c.vz;
+    c.m.rotation.x += c.ry; c.m.rotation.z += c.ry;
+    
+    // Salto no chão
+    if (c.m.position.y < 0.5) {
+      c.m.position.y = 0.5;
+      c.vy = Math.abs(c.vy) * 0.5; // Ressalto
+      c.vx *= 0.8; c.vz *= 0.8; // Fricção
+      if (Math.abs(c.vy) < 2) { scene.remove(c.m); coins.splice(i, 1); } // Morre se parar
+    }
+  }
+
+  renderHUD(dt);
+  renderer.render(scene, camera);
+}
+
+// Botões de Teste
+document.querySelectorAll("[data-action]").forEach(b => {
+  b.onclick = () => {
+    initAudio();
+    if(b.dataset.action==="like"){ checkEventProgress("likes", 15); spawnCoins(5); }
+    if(b.dataset.action==="comment"){ checkEventProgress("comments", 1); addChatMessage("Fã_Teste", "Incrível! 🔥"); }
+  };
+});
+document.querySelectorAll("
