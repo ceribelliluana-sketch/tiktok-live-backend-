@@ -1,4 +1,5 @@
-const { WebcastPushConnection } = require('tiktok-live-connector');
+const TikTokLiveConnector = require('tiktok-live-connector');
+const WebcastPushConnection = TikTokLiveConnector.WebcastPushConnection || TikTokLiveConnector;
 const WebSocket = require('ws');
 
 // ⚠️ SUBSTITUA PELO NOME DE USUÁRIO DO TIKTOK QUE ESTÁ AO VIVO (sem o @)
