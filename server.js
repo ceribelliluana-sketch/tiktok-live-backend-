@@ -1,11 +1,12 @@
 const TikTokLiveConnector = require('tiktok-live-connector');
+// Trata a importação independentemente da versão da biblioteca instalada
 const WebcastPushConnection = TikTokLiveConnector.WebcastPushConnection || TikTokLiveConnector;
 const WebSocket = require('ws');
 
 // ⚠️ SUBSTITUA PELO NOME DE USUÁRIO DO TIKTOK QUE ESTÁ AO VIVO (sem o @)
 const TIKTOK_USERNAME = "stream.kwpubg";
 
-// Pega a porta dinâmica da nuvem (Glitch/Replit) ou usa a 8080 localmente
+// Pega a porta dinâmica do Render ou usa a 8080 localmente
 const PORT = process.env.PORT || 8080;
 const wss = new WebSocket.Server({ port: PORT }, () => {
   console.log(`🚀 Servidor WebSocket rodando na porta ${PORT}`);
@@ -22,7 +23,7 @@ function broadcast(data) {
 }
 
 wss.on('connection', (ws) => {
-  console.log("🟢 O painel 3D (seu iPhone) acabou de se conectar!");
+  console.log("🟢 O painel 3D acabou de se conectar!");
   ws.on('close', () => console.log("🔴 O painel se desconectou."));
 });
 
@@ -40,7 +41,7 @@ tiktokLiveConnection.on('like', (data) => {
   broadcast({ type: 'like', user: `@${data.uniqueId}`, count: data.likeCount });
 });
 
-// --- COMENTÁRIOS DA CHAT ---
+// --- COMENTÁRIOS DO CHAT ---
 tiktokLiveConnection.on('chat', (data) => {
   broadcast({ type: 'comment', user: `@${data.uniqueId}`, comment: data.comment });
 });
