@@ -1,5 +1,8 @@
-const { WebcastPushConnection } = require('tiktok-live-connector');
+const TikTokLive = require('tiktok-live-connector');
 const WebSocket = require('ws');
+
+// Se o pacote for a função diretamente ou propriedade, apanhamos aqui
+const WebcastPushConnection = TikTokLive.WebcastPushConnection || TikTokLive;
 
 const TIKTOK_USERNAME = "stream.kwpubg";
 const PORT = process.env.PORT || 8080;
